@@ -1,2 +1,5 @@
 /.gradle/
 /build/
+/javaconfig.json
+/javac-services.*.log
+/javac-services.*.log.lck
