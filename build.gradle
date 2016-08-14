@@ -48,18 +48,14 @@ task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
     def relativePath = { File f ->
         f.absolutePath - "${project.rootDir.absolutePath}/"
     }
-
     ext.destFile = file("javaconfig.json")
-    ext.classPathFile = relativePath(tasks.getByPath(':vscodeClasspathFile').outputs.files.singleFile)
-    ext.sourcePaths = sourceSets.collect{ it.java.srcDirs }.flatten().collect{ relativePath(it) }
-    ext.outputDirectory = relativePath(new File(buildDir, 'vscode-classes'))
+    ext.config = [
+        sourcePath: sourceSets.collect{ it.java.srcDirs }.flatten().collect{ relativePath(it) },
+        classPathFile: relativePath(tasks.getByPath(':vscodeClasspathFile').outputs.files.singleFile),
+        outputDirectory: relativePath(new File(buildDir, 'vscode-classes'))
+    ]
     doLast {
-        def config = [
-            sourcePath: ext.sourcePaths,
-            classPathFile: ext.classPathFile,
-            outputDirectory: ext.outputDirectory
-        ]
-        def jsonContent = groovy.json.JsonOutput.toJson(config)
+        def jsonContent = groovy.json.JsonOutput.toJson(ext.config)
         destFile.text = groovy.json.JsonOutput.prettyPrint(jsonContent)
     }
 }
