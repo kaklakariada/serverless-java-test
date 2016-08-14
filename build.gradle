@@ -30,3 +30,35 @@ task buildZip(type: Zip) {
 }
 
 build.dependsOn buildZip
+
+task vscodeClasspathFile {
+    description 'Generate classpath file for the Visual Studio Code java plugin'
+    ext.destFile = file("$buildDir/classpath.txt")
+    outputs.file destFile
+    doLast {
+        def classpathString = configurations.compile.collect { it.absolutePath }.join(':')
+        assert destFile.parentFile.mkdir()
+        destFile.text = classpathString
+    }
+}
+
+task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
+    description 'Generate javaconfig.json file for the Visual Studio Code java plugin'
+    ext.destFile = file("javaconfig.json")
+    ext.classPathFile = tasks.getByPath(':vscodeClasspathFile').outputs.files.singleFile
+    ext.sourcePath = sourceSets.collect { it.java.srcDirs }.flatten().collect{ it.absolutePath }
+    doLast {
+        def config = [
+            sourcePath: ext.sourcePath,
+            classPathFile: ext.classPathFile.absolutePath,
+            outputDirectory: "$buildDir/vscode-classes"
+        ]
+        def jsonContent = groovy.json.JsonOutput.toJson(config)
+        destFile.text = groovy.json.JsonOutput.prettyPrint(jsonContent)
+    }
+}
+
+task vscode(dependsOn: vscodeJavaconfigFile) {
+    description 'Generares config files for the Visual Studio Code java plugin'
+    group 'vscode'
+}
