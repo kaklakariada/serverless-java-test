@@ -11,16 +11,16 @@
 #
 # Happy Coding!
 
-service: aws-java-gradle # NOTE: update this with your service name
+service: aws-java-service
 
 provider:
   name: aws
   runtime: java8
 
 # you can overwrite defaults here
-#defaults:
-#  stage: dev
-#  region: us-east-1
+defaults:
+  stage: dev
+  region: eu-west-1
 
 # you can add packaging information here
 package:
