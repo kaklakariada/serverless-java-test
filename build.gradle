@@ -44,14 +44,20 @@ task vscodeClasspathFile {
 
 task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
     description 'Generate javaconfig.json file for the Visual Studio Code java plugin'
+
+    def relativePath = { File f ->
+        f.absolutePath - "${project.rootDir.absolutePath}/"
+    }
+
     ext.destFile = file("javaconfig.json")
-    ext.classPathFile = tasks.getByPath(':vscodeClasspathFile').outputs.files.singleFile
-    ext.sourcePath = sourceSets.collect { it.java.srcDirs }.flatten().collect{ it.absolutePath }
+    ext.classPathFile = relativePath(tasks.getByPath(':vscodeClasspathFile').outputs.files.singleFile)
+    ext.sourcePaths = sourceSets.collect{ it.java.srcDirs }.flatten().collect{ relativePath(it) }
+    ext.outputDirectory = relativePath(new File(buildDir, 'vscode-classes'))
     doLast {
         def config = [
-            sourcePath: ext.sourcePath,
-            classPathFile: ext.classPathFile.absolutePath,
-            outputDirectory: "$buildDir/vscode-classes"
+            sourcePath: ext.sourcePaths,
+            classPathFile: ext.classPathFile,
+            outputDirectory: ext.outputDirectory
         ]
         def jsonContent = groovy.json.JsonOutput.toJson(config)
         destFile.text = groovy.json.JsonOutput.prettyPrint(jsonContent)
