@@ -37,11 +37,13 @@ build.dependsOn buildZip
 
 task vscodeClasspathFile {
     description 'Generates classpath file for the Visual Studio Code java plugin'
-    ext.destFile = file("$buildDir/classpath.txt")
+    ext.destFile = file("classpath.txt")
     outputs.file destFile
     doLast {
         def classpathString = configurations.compile.collect{ it.absolutePath }.join(':')
-        assert destFile.parentFile.mkdir()
+        if(!destFile.parentFile.exists()) {
+            assert destFile.parentFile.mkdir()
+        }
         destFile.text = classpathString
     }
 }
