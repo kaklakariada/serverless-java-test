@@ -5,5 +5,4 @@
 /javac-services.*.log.lck
 /node_modules/
 /npm-debug.log
-
-classpath.txt
+/classpath.txt
