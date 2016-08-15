@@ -1,3 +1,7 @@
+plugins {
+  id "com.moowork.node" version "0.13"
+}
+
 apply plugin: 'java'
 
 repositories {
@@ -63,4 +67,16 @@ task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
 task vscode(dependsOn: vscodeJavaconfigFile) {
     description 'Generates config files for the Visual Studio Code java plugin'
     group 'vscode'
+}
+
+task deploy(type: NpmTask, dependsOn: buildZip) {
+    description 'Deploys using serverless'
+    group 'serverless'
+    args = ['run', 'deploy']
+}
+
+task remove(type: NpmTask, dependsOn: buildZip) {
+    description 'Removes the deployed services'
+    group 'serverless'
+    args = ['run', 'remove']
 }
