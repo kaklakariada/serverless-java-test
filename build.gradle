@@ -11,7 +11,12 @@ repositories {
 dependencies {
     compile (
         'com.amazonaws:aws-lambda-java-core:1.1.0',
-        'com.amazonaws:aws-lambda-java-events:1.1.0'
+        'com.amazonaws:aws-lambda-java-events:1.1.0',
+        'org.slf4j:slf4j-api:1.7.19'
+    )
+    runtime (
+        'org.slf4j:slf4j-log4j12:1.7.19',
+        'com.amazonaws:aws-lambda-java-log4j:1.0.0'
     )
 }
 
@@ -63,13 +68,13 @@ task vscode(dependsOn: vscodeJavaconfigFile) {
     group 'vscode'
 }
 
-task deploy(type: NpmTask, dependsOn: buildZip) {
+task deploy(type: NpmTask, dependsOn: [npm_install, buildZip]) {
     description 'Deploys using serverless'
     group 'serverless'
     args = ['run', 'deploy']
 }
 
-task remove(type: NpmTask, dependsOn: buildZip) {
+task remove(type: NpmTask, dependsOn: npm_install) {
     description 'Removes the deployed services'
     group 'serverless'
     args = ['run', 'remove']
