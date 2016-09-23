@@ -70,12 +70,18 @@ task vscode(dependsOn: vscodeJavaconfigFile) {
 
 task deploy(type: NpmTask, dependsOn: [npm_install, buildZip]) {
     description 'Deploys using serverless'
-    group 'serverless'
+    group 'deploy'
     args = ['run', 'deploy']
 }
 
 task remove(type: NpmTask, dependsOn: npm_install) {
     description 'Removes the deployed services'
-    group 'serverless'
+    group 'deploy'
     args = ['run', 'remove']
+}
+
+task info(type: NpmTask, dependsOn: npm_install) {
+    description 'Displays information about the service.'
+    group 'deploy'
+    args = ['run', 'info']
 }
