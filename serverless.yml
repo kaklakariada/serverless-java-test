@@ -3,8 +3,6 @@ service: aws-java-service
 provider:
   name: aws
   runtime: java8
-
-defaults:
   stage: dev
   region: eu-west-1
 
