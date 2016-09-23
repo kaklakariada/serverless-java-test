@@ -46,7 +46,7 @@ public class Handler implements RequestHandler<Request, Response> {
 	@Override
 	public Response handleRequest(Request input, Context context) {
 		handlerCount++;
-		final String message = "Request #" + handlerCount + ", sime since startup: " + getTimeSinceStartup()
+		final String message = "Request #" + handlerCount + ", time since startup: " + getTimeSinceStartup()
 				+ ", scheduled invocations: " + invocations.size();
 		LOG.debug(message);
 		return new Response(message, new ArrayList<>(invocations));
