@@ -17,7 +17,7 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 
 import hello.Response.Invocation;
 
-public class Handler implements RequestHandler<Request, ApiGatewayProxyResponse<Response>> {
+public class Handler implements RequestHandler<Request, ApiGatewayJsonResponse<Response>> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(Handler.class);
 	private final ScheduledExecutorService executor;
@@ -44,12 +44,12 @@ public class Handler implements RequestHandler<Request, ApiGatewayProxyResponse<
 	}
 
 	@Override
-	public ApiGatewayProxyResponse<Response> handleRequest(Request input, Context context) {
+	public ApiGatewayJsonResponse<Response> handleRequest(Request input, Context context) {
 		handlerCount++;
 		final String message = "Request #" + handlerCount + ", time since startup: " + getTimeSinceStartup()
 				+ ", scheduled invocations: " + invocations.size();
 		LOG.debug(message);
-		return new ApiGatewayProxyResponse<Response>(new Response(message, new ArrayList<>(invocations)));
+		return new ApiGatewayJsonResponse<Response>(new Response(message, new ArrayList<>(invocations)));
 	}
 
 	private Duration getTimeSinceStartup() {
