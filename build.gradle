@@ -1,5 +1,5 @@
 plugins {
-  id "com.moowork.node" version "0.13"
+  id "com.moowork.node" version "1.0.1"
 }
 
 apply plugin: 'java'
@@ -66,6 +66,10 @@ task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
 task vscode(dependsOn: vscodeJavaconfigFile) {
     description 'Generates config files for the Visual Studio Code java plugin'
     group 'vscode'
+}
+
+node {
+  download = true
 }
 
 task deploy(type: NpmTask, dependsOn: [npm_install, buildZip]) {

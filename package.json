@@ -19,6 +19,6 @@
   },
   "homepage": "https://github.com/kaklakariada/serverless-java-test#readme",
   "devDependencies": {
-    "serverless": "^1.0.0-rc.2"
+    "serverless": "^1.3.0"
   }
 }
