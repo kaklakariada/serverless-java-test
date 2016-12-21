@@ -11,3 +11,10 @@
 /.project
 /.settings/org.eclipse.buildship.core.prefs
 /.serverless
+/gradle.properties
+/buildSrc/.settings/org.eclipse.buildship.core.prefs
+/buildSrc/bin
+/buildSrc/build
+/buildSrc/.classpath
+/buildSrc/.project
+/buildSrc/.gradle

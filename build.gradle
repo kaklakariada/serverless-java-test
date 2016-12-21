@@ -1,6 +1,3 @@
-plugins {
-  id "com.moowork.node" version "1.0.1"
-}
 
 apply plugin: 'java'
 
@@ -8,17 +5,17 @@ repositories {
     jcenter()
 }
 
+version = '0.0.1'
+
 dependencies {
-    compile (
-        'com.amazonaws:aws-lambda-java-core:1.1.0',
-        'com.amazonaws:aws-lambda-java-events:1.3.0',
-        'org.slf4j:slf4j-api:1.7.19'
-    )
-    runtime (
-        'org.slf4j:slf4j-log4j12:1.7.19',
-        'com.amazonaws:aws-lambda-java-log4j:1.0.0'
-    )
+    compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
+    compile 'org.slf4j:slf4j-api:1.7.19'
+    //compile 'com.amazonaws:aws-lambda-java-events:1.3.0'
+    
+    //runtime 'org.slf4j:slf4j-log4j12:1.7.19'
+    //runtime 'com.amazonaws:aws-lambda-java-log4j:1.0.0'
 }
+
 
 task buildZip(type: Zip) {
     description 'Builds the zip file for upload'
@@ -28,6 +25,18 @@ task buildZip(type: Zip) {
     into('lib') {
         from configurations.runtime
     }
+}
+
+task s3upload(type: S3UploadTask, dependsOn: buildZip) {
+  region = awsregion
+  bucket = binarybucket
+  file = tasks['buildZip'].outputs.files.singleFile
+}
+
+task deploy(type: DeployTask, dependsOn: s3upload) {
+  region = awsregion
+  s3Url = tasks['s3upload'].s3Url
+  template = file('template.yaml')
 }
 
 build.dependsOn buildZip
@@ -66,26 +75,4 @@ task vscodeJavaconfigFile(dependsOn: vscodeClasspathFile) {
 task vscode(dependsOn: vscodeJavaconfigFile) {
     description 'Generates config files for the Visual Studio Code java plugin'
     group 'vscode'
-}
-
-node {
-  download = true
-}
-
-task deploy(type: NpmTask, dependsOn: [npm_install, buildZip]) {
-    description 'Deploys using serverless'
-    group 'deploy'
-    args = ['run', 'deploy']
-}
-
-task remove(type: NpmTask, dependsOn: npm_install) {
-    description 'Removes the deployed services'
-    group 'deploy'
-    args = ['run', 'remove']
-}
-
-task info(type: NpmTask, dependsOn: npm_install) {
-    description 'Displays information about the service.'
-    group 'deploy'
-    args = ['run', 'info']
 }
