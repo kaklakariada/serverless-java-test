@@ -16,14 +16,12 @@ public class S3UploadTask extends DefaultTask {
 
 	@Input
 	public String bucket;
-
+	@Input
+	public String prefix;
 	@Input
 	public String region;
-
 	@InputFile
 	public File file;
-
-	private final long timestamp = System.currentTimeMillis();
 
 	@TaskAction
 	public void uploadFileToS3() {
@@ -37,7 +35,7 @@ public class S3UploadTask extends DefaultTask {
 
 	private String getS3Key() {
 		final String version = getProject().getVersion().toString();
-		return getProject().getName() + "/" + version + "/" + timestamp + "-" + file.getName();
+		return getProject().getName() + "/" + version + "/" + prefix + "/" + file.getName();
 	}
 
 	private void upload(final AmazonS3 s3Client, final String key) {
@@ -52,7 +50,7 @@ public class S3UploadTask extends DefaultTask {
 		final Upload upload = transferManager.upload(bucket, key, file);
 		try {
 			upload.waitForCompletion();
-			getProject().getLogger().info("Upload complete");
+			getProject().getLogger().info("Uploaded {} to {}", file, getS3Url());
 		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new AssertionError("Upload interrupted", e);

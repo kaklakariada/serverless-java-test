@@ -1,3 +1,4 @@
+import java.util.Collection;
 import java.util.function.Supplier;
 
 import org.gradle.api.logging.Logging;
@@ -11,9 +12,11 @@ import com.amazonaws.services.cloudformation.model.ChangeSetType;
 import com.amazonaws.services.cloudformation.model.CreateChangeSetRequest;
 import com.amazonaws.services.cloudformation.model.CreateChangeSetResult;
 import com.amazonaws.services.cloudformation.model.DescribeChangeSetRequest;
+import com.amazonaws.services.cloudformation.model.DescribeChangeSetResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
 import com.amazonaws.services.cloudformation.model.ExecuteChangeSetRequest;
+import com.amazonaws.services.cloudformation.model.Parameter;
 import com.amazonaws.services.cloudformation.model.Stack;
 
 public class CloudformationService {
@@ -30,13 +33,14 @@ public class CloudformationService {
 	}
 
 	public String createChangeSet(String stackName, String changeSetName, ChangeSetType changeSetType,
-			String templateBody) {
+			String templateBody, Collection<Parameter> parameters) {
+		LOG.info("Creating change set for stack {} with parameters {}", stackName, parameters);
 		final CreateChangeSetRequest changeSetRequest = new CreateChangeSetRequest() //
 				.withCapabilities(Capability.CAPABILITY_IAM) //
 				.withStackName(stackName) //
 				.withChangeSetName(changeSetName) //
 				.withChangeSetType(changeSetType) //
-				.withTemplateBody(templateBody);
+				.withParameters(parameters).withTemplateBody(templateBody);
 		final CreateChangeSetResult result = cloudFormation.createChangeSet(changeSetRequest);
 		LOG.info("Change set created: {}", result);
 		return result.getId();
@@ -50,22 +54,29 @@ public class CloudformationService {
 
 	public void waitForChangeSetReady(String changeSetArn) {
 		LOG.info("Waiting for change set {}", changeSetArn);
-		final StatusPoller statusPoller = new StatusPoller(() -> cloudFormation
-				.describeChangeSet(new DescribeChangeSetRequest().withChangeSetName(changeSetArn)).getStatus());
+		final StatusPoller statusPoller = new StatusPoller(() -> getChangeSetStatus(changeSetArn).getStatus(),
+				() -> getChangeSetStatus(changeSetArn).getStatusReason());
 		statusPoller.waitUntilFinished();
+	}
+
+	private DescribeChangeSetResult getChangeSetStatus(String changeSetArn) {
+		return cloudFormation.describeChangeSet(new DescribeChangeSetRequest().withChangeSetName(changeSetArn));
 	}
 
 	public void waitForStackReady(String stackName) {
 		LOG.info("Waiting for stack {}", stackName);
 		final StatusPoller statusPoller = new StatusPoller(() -> {
-			final DescribeStacksResult result = cloudFormation
-					.describeStacks(new DescribeStacksRequest().withStackName(stackName));
-			return result.getStacks().stream() //
-					.map(Stack::getStackStatus) //
-					.findFirst() //
-					.orElseThrow(() -> new DeploymentException("Stack '" + stackName + "' not found"));
-		});
+			return getStackStatus(stackName).getStackStatus();
+		}, () -> getStackStatus(stackName).toString());
 		statusPoller.waitUntilFinished();
+	}
+
+	private Stack getStackStatus(String stackName) {
+		final DescribeStacksResult result = cloudFormation
+				.describeStacks(new DescribeStacksRequest().withStackName(stackName));
+		return result.getStacks().stream() //
+				.findFirst() //
+				.orElseThrow(() -> new DeploymentException("Stack '" + stackName + "' not found"));
 	}
 
 	public void executeChangeSet(String changeSetArn) {
@@ -75,9 +86,11 @@ public class CloudformationService {
 
 	private static class StatusPoller {
 		private final Supplier<String> statusSupplier;
+		private final Supplier<String> failureMessageSupplier;
 
-		public StatusPoller(Supplier<String> statusSupplier) {
+		public StatusPoller(Supplier<String> statusSupplier, Supplier<String> failureMessageSupplier) {
 			this.statusSupplier = statusSupplier;
+			this.failureMessageSupplier = failureMessageSupplier;
 		}
 
 		public void waitUntilFinished() {
@@ -85,7 +98,7 @@ public class CloudformationService {
 				final String status = statusSupplier.get();
 				LOG.info("Got status {}", status);
 				if (isFailed(status)) {
-					throw new DeploymentException("Got failure status " + status);
+					throw new DeploymentException("Got failure status " + status + ": " + failureMessageSupplier.get());
 				}
 				if (isSuccess(status)) {
 					return;
@@ -103,7 +116,7 @@ public class CloudformationService {
 		}
 
 		private boolean isSuccess(String status) {
-			return status.toUpperCase().contains("COMPLETE");
+			return status.toUpperCase().endsWith("COMPLETE");
 		}
 
 		private boolean isFailed(String status) {

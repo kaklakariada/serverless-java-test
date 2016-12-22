@@ -7,6 +7,10 @@ repositories {
 
 version = '0.0.1'
 
+ext {
+    uploadPrefix = System.currentTimeMillis()
+}
+
 dependencies {
     compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
     compile 'org.slf4j:slf4j-api:1.7.19'
@@ -27,16 +31,26 @@ task buildZip(type: Zip) {
     }
 }
 
-task s3upload(type: S3UploadTask, dependsOn: buildZip) {
+task uploadZip(type: S3UploadTask, dependsOn: buildZip) {
   region = awsregion
   bucket = binarybucket
+  prefix = uploadPrefix
   file = tasks['buildZip'].outputs.files.singleFile
 }
 
-task deploy(type: DeployTask, dependsOn: s3upload) {
+task uploadSwaggerDefinition(type: S3UploadTask) {
   region = awsregion
-  s3Url = tasks['s3upload'].s3Url
+  bucket = binarybucket
+  prefix = uploadPrefix
+  file = file('swagger.yaml')
+}
+
+task deploy(type: DeployTask, dependsOn: [uploadZip, uploadSwaggerDefinition]) {
+  region = awsregion
+  codeUri = tasks['uploadZip'].s3Url
+  swaggerUri = tasks['uploadSwaggerDefinition'].s3Url
   template = file('template.yaml')
+  stage = 'test'
 }
 
 build.dependsOn buildZip

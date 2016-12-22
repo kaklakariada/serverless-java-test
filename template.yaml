@@ -1,15 +1,38 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
+
 Resources:
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      DefinitionUri: ${DefinitionUri}
+      StageName: ${stage}
+      Variables:
+        LambdaFunctionName: !Ref LambdaFunction
+        Stage: ${stage}
+
   TestFunction:
     Type: AWS::Serverless::Function
     Properties:
       Handler: hello.Handler
       Runtime: java8
-      CodeUri: ${codeUri}
+      CodeUri: ${CodeUri}
       Events:
         GetResource:
           Type: Api
           Properties:
-            Path: /resource/{resourceId}
+            RestApiId: !Ref ApiGatewayApi
+            Path: /hello
             Method: get
+            
+Outputs:
+  ApiUrl:
+    Description: URL of your API endpoint
+    Value: !Join
+      - ''
+      - - https://
+        - !Ref ApiGatewayApi
+        - '.execute-api.'
+        - !Ref 'AWS::Region'
+        - '.amazonaws.com/'
+        - '${stage}'
