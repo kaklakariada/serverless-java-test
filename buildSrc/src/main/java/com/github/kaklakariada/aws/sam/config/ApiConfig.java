@@ -5,7 +5,7 @@ import java.io.File;
 public class ApiConfig {
 	public File samTemplate;
 	public File swaggerDefinition;
-	public String stackName;
+	public String stackBaseName;
 
 	@Override
 	public String toString() {

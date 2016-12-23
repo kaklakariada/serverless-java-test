@@ -38,6 +38,10 @@ public class SamConfig {
 		return stages.getByName(currentStage);
 	}
 
+	public String getStackName() {
+		return api.stackBaseName + "-" + getStage().name;
+	}
+
 	public Regions getRegion() {
 		final String stageRegion = getStage().awsRegion;
 		return Regions.fromName(stageRegion != null ? stageRegion : defaultAwsRegion);

@@ -40,11 +40,12 @@ public class CloudformationService {
 
 	public String createChangeSet(String changeSetName, ChangeSetType changeSetType, String templateBody,
 			Collection<Parameter> parameters) {
-		LOG.info("Creating change set for stack {} with name {}, type {} and parameters {}", config.api.stackName,
+		LOG.info("Creating change set for stack {} with name {}, type {} and parameters {}", config.getStackName(),
 				changeSetName, changeSetType, parameters);
 		final CreateChangeSetRequest changeSetRequest = new CreateChangeSetRequest() //
 				.withCapabilities(Capability.CAPABILITY_IAM) //
-				.withStackName(config.api.stackName) //
+				.withStackName(config.getStackName()) //
+				.withDescription(config.getStackName()) //
 				.withChangeSetName(changeSetName) //
 				.withChangeSetType(changeSetType) //
 				.withParameters(parameters).withTemplateBody(templateBody);
@@ -56,16 +57,16 @@ public class CloudformationService {
 	public boolean stackExists() {
 		try {
 			final DescribeStacksResult stacks = cloudFormation
-					.describeStacks(new DescribeStacksRequest().withStackName(config.api.stackName));
+					.describeStacks(new DescribeStacksRequest().withStackName(config.getStackName()));
 			return stacks.getStacks().stream() //
 					.peek(s -> LOG.info("Found stack {}", s)) //
-					.filter(s -> s.getStackName().equals(config.api.stackName)) //
+					.filter(s -> s.getStackName().equals(config.getStackName())) //
 					.filter(s -> !s.getStackStatus().equals("REVIEW_IN_PROGRESS")) //
 					.findAny() //
 					.isPresent();
 		} catch (final AmazonCloudFormationException e) {
 			if (e.getStatusCode() == 400) {
-				LOG.info("Got exception", e);
+				LOG.trace("Got exception", e);
 				return false;
 			}
 			throw e;
@@ -84,7 +85,7 @@ public class CloudformationService {
 	}
 
 	public void waitForStackReady() {
-		LOG.info("Waiting for stack {}", config.api.stackName);
+		LOG.info("Waiting for stack {}", config.getStackName());
 		final StatusPoller statusPoller = new StatusPoller(() -> {
 			return getStackStatus().getStackStatus();
 		}, () -> getStackStatus().toString());
@@ -93,10 +94,10 @@ public class CloudformationService {
 
 	private Stack getStackStatus() {
 		final DescribeStacksResult result = cloudFormation
-				.describeStacks(new DescribeStacksRequest().withStackName(config.api.stackName));
+				.describeStacks(new DescribeStacksRequest().withStackName(config.getStackName()));
 		return result.getStacks().stream() //
 				.findFirst() //
-				.orElseThrow(() -> new DeploymentException("Stack '" + config.api.stackName + "' not found"));
+				.orElseThrow(() -> new DeploymentException("Stack '" + config.getStackName() + "' not found"));
 	}
 
 	public void executeChangeSet(String changeSetArn) {
