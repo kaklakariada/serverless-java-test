@@ -76,7 +76,7 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 
 		final AwsMetadataService awsMetadataService = new AwsMetadataService(config);
 		task.parameters = asList(
-				new Parameter().withParameterKey("region").withParameterValue(config.getRegion().toString()),
+				new Parameter().withParameterKey("region").withParameterValue(config.getRegion().getName()),
 				new Parameter().withParameterKey("accountId").withParameterValue(awsMetadataService.getAccountId()));
 		task.input = config.api.swaggerDefinition;
 		task.output = new File(config.getProjct().getBuildDir(), task.input.getName());
