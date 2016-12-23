@@ -19,8 +19,7 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 
 		final NamedDomainObjectContainer<Stage> stages = project.container(Stage.class);
 
-		final SamConfig samConfig = project.getExtensions().create("sam", SamConfig.class, stages);
+		final SamConfig samConfig = project.getExtensions().create("sam", SamConfig.class, project, stages);
 		((ExtensionAware) samConfig).getExtensions().add("stages", stages);
-
 	}
 }
