@@ -1,3 +1,4 @@
+package com.github.kaklakariada.aws.sam;
 
 public class DeploymentException extends RuntimeException {
 	private static final long serialVersionUID = 1L;

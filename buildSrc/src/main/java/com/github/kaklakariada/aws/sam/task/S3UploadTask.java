@@ -1,4 +1,4 @@
-package com.github.kaklakariada.aws.sam.tasks;
+package com.github.kaklakariada.aws.sam.task;
 
 import java.io.File;
 

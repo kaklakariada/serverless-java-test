@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 
 import com.github.kaklakariada.aws.sam.config.SamConfig;
 import com.github.kaklakariada.aws.sam.config.Stage;
-import com.github.kaklakariada.aws.sam.tasks.S3UploadTask;
+import com.github.kaklakariada.aws.sam.task.S3UploadTask;
 
 import groovy.lang.Closure;
 
