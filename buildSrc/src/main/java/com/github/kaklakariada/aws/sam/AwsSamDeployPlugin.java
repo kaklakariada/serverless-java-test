@@ -1,9 +1,12 @@
 package com.github.kaklakariada.aws.sam;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 
+import java.io.File;
 import java.util.function.Consumer;
 
+import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -13,8 +16,12 @@ import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.tasks.bundling.Zip;
 import org.slf4j.Logger;
 
+import com.amazonaws.services.cloudformation.model.Parameter;
 import com.github.kaklakariada.aws.sam.config.SamConfig;
 import com.github.kaklakariada.aws.sam.config.Stage;
+import com.github.kaklakariada.aws.sam.service.AwsMetadataService;
+import com.github.kaklakariada.aws.sam.task.DeployTask;
+import com.github.kaklakariada.aws.sam.task.ReplacePlaceholerTask;
 import com.github.kaklakariada.aws.sam.task.S3UploadTask;
 
 import groovy.lang.Closure;
@@ -31,7 +38,47 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 
 		final Zip zipTask = createBuildZipTask(project);
 
-		createUploadZipTask(config, zipTask);
+		final S3UploadTask uploadZipTask = createUploadZipTask(config, zipTask);
+
+		final ReplacePlaceholerTask updateSwaggerTask = createUpdateSwaggerTask(config);
+		final S3UploadTask uploadSwaggerTask = createUploadSwaggerTask(config, updateSwaggerTask);
+
+		final DeployTask deployTask = createDeployTask(config, uploadZipTask, uploadSwaggerTask);
+	}
+
+	private DeployTask createDeployTask(SamConfig config, S3UploadTask uploadZipTask, S3UploadTask uploadSwaggerTask) {
+		final DeployTask task = (DeployTask) config.getProjct().task(singletonMap("type", DeployTask.class), "deploy");
+		task.setDescription("Deploy stack to AWS");
+		task.setGroup(TASK_GROUP);
+		task.dependsOn(uploadZipTask, uploadSwaggerTask);
+		task.config = config;
+		config.getProjct().afterEvaluate(new Action<Project>() {
+			@Override
+			public void execute(Project project) {
+				task.codeUri = uploadZipTask.getS3Url();
+				task.swaggerUri = uploadSwaggerTask.getS3Url();
+			}
+		});
+		return task;
+	}
+
+	private ReplacePlaceholerTask createUpdateSwaggerTask(final SamConfig config) {
+		final ReplacePlaceholerTask task = (ReplacePlaceholerTask) config.getProjct()
+				.task(singletonMap("type", ReplacePlaceholerTask.class), "updateSwagger");
+
+		config.getProjct().afterEvaluate(new Action<Project>() {
+			@Override
+			public void execute(Project project) {
+				final AwsMetadataService awsMetadataService = new AwsMetadataService(config);
+				task.parameters = asList(
+						new Parameter().withParameterKey("region").withParameterValue(config.getRegion().toString()),
+						new Parameter().withParameterKey("accountId")
+								.withParameterValue(awsMetadataService.getAccountId()));
+				task.input = config.api.swaggerDefinition;
+				task.output = new File(project.getBuildDir(), task.input.getName());
+			}
+		});
+		return task;
 	}
 
 	private S3UploadTask createUploadZipTask(final SamConfig config, final Zip zipTask) {
@@ -41,7 +88,28 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		task.setGroup(TASK_GROUP);
 		task.dependsOn(zipTask);
 		task.config = config;
-		task.file = zipTask.getOutputs().getFiles().getSingleFile();
+		config.getProjct().afterEvaluate(new Action<Project>() {
+			@Override
+			public void execute(Project project) {
+				task.file = zipTask.getOutputs().getFiles().getSingleFile();
+			}
+		});
+		return task;
+	}
+
+	private S3UploadTask createUploadSwaggerTask(final SamConfig config, final ReplacePlaceholerTask updateTask) {
+		final S3UploadTask task = (S3UploadTask) config.getProjct().task(singletonMap("type", S3UploadTask.class),
+				"uploadSwager");
+		task.setDescription("Upload swagger definition to s3");
+		task.setGroup(TASK_GROUP);
+		task.dependsOn(updateTask);
+		task.config = config;
+		config.getProjct().afterEvaluate(new Action<Project>() {
+			@Override
+			public void execute(Project project) {
+				task.file = updateTask.output;
+			}
+		});
 		return task;
 	}
 
@@ -50,14 +118,18 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		task.setDescription("Build lambda zip");
 		task.setGroup(TASK_GROUP);
 		task.setBaseName(project.getName());
-		task.setVersion("");
-		task.into("lib", closure(task, CopySpec.class, (delegate) -> {
-			delegate.from(project.getConfigurations().getByName("runtime"));
-		}));
-		task.into("", closure(task, CopySpec.class, (delegate) -> {
-			delegate.from(project.getTasks().getByPath(":compileJava"),
-					project.getTasks().getByPath(":processResources"));
-		}));
+		project.afterEvaluate(new Action<Project>() {
+			@Override
+			public void execute(Project project) {
+				task.into("lib", closure(task, CopySpec.class, (delegate) -> {
+					delegate.from(project.getConfigurations().getByName("runtime"));
+				}));
+				task.into("", closure(task, CopySpec.class, (delegate) -> {
+					delegate.from(project.getTasks().getByPath(":compileJava"),
+							project.getTasks().getByPath(":processResources"));
+				}));
+			}
+		});
 		return task;
 
 	}

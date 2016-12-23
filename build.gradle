@@ -12,7 +12,8 @@ version = '0.0.1'
 
 sam {
     currentStage = "test"
-    defaultRegion = awsregion
+    defaultAwsProfile = 'default'
+    defaultAwsRegion = awsregion
     defaultDeploymentBucket = awsDeploymentBucket
     
     stages {

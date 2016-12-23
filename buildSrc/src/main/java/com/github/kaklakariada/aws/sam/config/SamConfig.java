@@ -4,6 +4,7 @@ import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 
 import com.amazonaws.regions.Regions;
+import com.github.kaklakariada.aws.sam.service.AwsClientFactory;
 
 import groovy.lang.Closure;
 
@@ -15,7 +16,8 @@ public class SamConfig {
 	public String currentStage;
 	public ApiConfig api;
 
-	public String defaultRegion;
+	public String defaultAwsRegion;
+	public String defaultAwsProfile;
 	public String defaultDeploymentBucket;
 
 	public SamConfig(Project projct, NamedDomainObjectContainer<Stage> stages) {
@@ -37,8 +39,8 @@ public class SamConfig {
 	}
 
 	public Regions getRegion() {
-		final String stageRegion = getStage().region;
-		return Regions.fromName(stageRegion != null ? stageRegion : defaultRegion);
+		final String stageRegion = getStage().awsRegion;
+		return Regions.fromName(stageRegion != null ? stageRegion : defaultAwsRegion);
 	}
 
 	public String getDeploymentBucket() {
@@ -46,8 +48,17 @@ public class SamConfig {
 		return stageBucket != null ? stageBucket : defaultDeploymentBucket;
 	}
 
+	public String getAwsProfile() {
+		final String profile = getStage().awsProfile;
+		return profile != null ? profile : defaultAwsProfile;
+	}
+
 	public long getDeploymentTimestamp() {
 		return deploymentTimestamp;
+	}
+
+	public AwsClientFactory getAwsClientFactory() {
+		return AwsClientFactory.create(getRegion(), getAwsProfile());
 	}
 
 	@Override

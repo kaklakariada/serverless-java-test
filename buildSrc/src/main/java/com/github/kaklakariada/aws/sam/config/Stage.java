@@ -2,7 +2,8 @@ package com.github.kaklakariada.aws.sam.config;
 
 public class Stage {
 	final String name;
-	String region;
+	String awsRegion;
+	String awsProfile;
 	String deploymentBucket;
 
 	public Stage(String name) {

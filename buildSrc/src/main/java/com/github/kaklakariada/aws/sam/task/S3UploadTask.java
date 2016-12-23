@@ -3,6 +3,7 @@ package com.github.kaklakariada.aws.sam.task;
 import java.io.File;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.TaskAction;
 
@@ -17,6 +18,7 @@ public class S3UploadTask extends DefaultTask {
 	@InputFile
 	public File file;
 
+	@Input
 	public SamConfig config;
 
 	@TaskAction

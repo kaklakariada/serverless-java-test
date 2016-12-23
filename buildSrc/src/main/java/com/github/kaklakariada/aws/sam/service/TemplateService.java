@@ -5,6 +5,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Collection;
 
 import com.amazonaws.services.cloudformation.model.Parameter;
@@ -23,8 +24,12 @@ public class TemplateService {
 	}
 
 	public void writeFile(String content, Path path) {
+
 		try {
-			Files.write(path, content.getBytes(CHARSET_UTF8));
+			if (Files.notExists(path.getParent())) {
+				Files.createDirectories(path.getParent());
+			}
+			Files.write(path, content.getBytes(CHARSET_UTF8), StandardOpenOption.CREATE);
 		} catch (final IOException e) {
 			throw new DeploymentException("Error writing to " + path.toAbsolutePath(), e);
 		}

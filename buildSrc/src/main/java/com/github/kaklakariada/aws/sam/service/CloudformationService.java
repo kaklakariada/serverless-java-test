@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import com.amazonaws.services.cloudformation.AmazonCloudFormation;
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient;
+import com.amazonaws.services.cloudformation.model.AmazonCloudFormationException;
 import com.amazonaws.services.cloudformation.model.Capability;
 import com.amazonaws.services.cloudformation.model.ChangeSetType;
 import com.amazonaws.services.cloudformation.model.CreateChangeSetRequest;
@@ -34,7 +35,7 @@ public class CloudformationService {
 	}
 
 	public CloudformationService(SamConfig config) {
-		this(config, new AmazonCloudFormationClient().withRegion(config.getRegion()));
+		this(config, config.getAwsClientFactory().create(AmazonCloudFormationClient::new));
 	}
 
 	public String createChangeSet(String changeSetName, ChangeSetType changeSetType, String templateBody,
@@ -52,9 +53,16 @@ public class CloudformationService {
 	}
 
 	public boolean stackExists() {
-		final DescribeStacksResult stacks = cloudFormation
-				.describeStacks(new DescribeStacksRequest().withStackName(config.api.stackName));
-		return !stacks.getStacks().isEmpty();
+		try {
+			final DescribeStacksResult stacks = cloudFormation
+					.describeStacks(new DescribeStacksRequest().withStackName(config.api.stackName));
+			return !stacks.getStacks().isEmpty();
+		} catch (final AmazonCloudFormationException e) {
+			if (e.getStatusCode() == 400) {
+				return false;
+			}
+			throw e;
+		}
 	}
 
 	public void waitForChangeSetReady(String changeSetArn) {
