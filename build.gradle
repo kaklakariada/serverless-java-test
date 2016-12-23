@@ -1,11 +1,34 @@
+plugins {
+    id 'java'
+}
 
-apply plugin: 'java'
+apply plugin: com.github.kaklakariada.aws.sam.AwsSamDeployPlugin
 
 repositories {
     jcenter()
 }
 
 version = '0.0.1'
+
+sam {
+    currentStage = "test"
+    stages {
+        test {
+        
+        }
+        
+        prelive {
+        
+        }
+    }
+}
+
+task printStage {
+    doLast {
+        sam.stages.each { println "stage $it" }
+        println "Current stage: $sam.stage"
+    }
+}
 
 ext {
     uploadPrefix = System.currentTimeMillis()
