@@ -5,6 +5,7 @@ import java.io.File;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -24,14 +25,15 @@ public class S3UploadTask extends DefaultTask {
 	@TaskAction
 	public void uploadFileToS3() {
 		final AmazonS3 s3Client = new AmazonS3Client().withRegion(config.getRegion());
-		upload(s3Client, getS3Key());
+		upload(s3Client, calculateS3Key());
 	}
 
+	@Nested
 	public String getS3Url() {
-		return "s3://" + config.getDeploymentBucket() + "/" + getS3Key();
+		return "s3://" + config.getDeploymentBucket() + "/" + calculateS3Key();
 	}
 
-	private String getS3Key() {
+	private String calculateS3Key() {
 		final String version = getProject().getVersion().toString();
 		return getProject().getName() + "/" + version + "/" + config.getDeploymentTimestamp() + "/" + file.getName();
 	}
