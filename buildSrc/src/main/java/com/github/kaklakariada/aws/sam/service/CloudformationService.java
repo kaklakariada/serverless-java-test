@@ -1,5 +1,7 @@
 package com.github.kaklakariada.aws.sam.service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.function.Supplier;
 
@@ -115,9 +117,10 @@ public class CloudformationService {
 		}
 
 		public void waitUntilFinished() {
+			final Instant start = Instant.now();
 			while (true) {
 				final String status = statusSupplier.get();
-				LOG.info("Got status {}", status);
+				LOG.info("Got status {} after {}", status, Duration.between(start, Instant.now()));
 				if (isFailed(status)) {
 					throw new DeploymentException("Got failure status " + status + ": " + failureMessageSupplier.get());
 				}

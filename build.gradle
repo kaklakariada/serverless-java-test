@@ -28,7 +28,7 @@ sam {
     api {
         stackBaseName = project.name
         samTemplate = file('template.yaml')
-        //swaggerDefinition = file('swagger.yaml')
+        swaggerDefinition = file('swagger.yaml')
     }
 }
 
