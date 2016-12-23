@@ -40,7 +40,8 @@ public class CloudformationService {
 
 	public String createChangeSet(String changeSetName, ChangeSetType changeSetType, String templateBody,
 			Collection<Parameter> parameters) {
-		LOG.info("Creating change set for stack {} with parameters {}", config.api.stackName, parameters);
+		LOG.info("Creating change set for stack {} with name {}, type {} and parameters {}", config.api.stackName,
+				changeSetName, changeSetType, parameters);
 		final CreateChangeSetRequest changeSetRequest = new CreateChangeSetRequest() //
 				.withCapabilities(Capability.CAPABILITY_IAM) //
 				.withStackName(config.api.stackName) //
@@ -56,9 +57,15 @@ public class CloudformationService {
 		try {
 			final DescribeStacksResult stacks = cloudFormation
 					.describeStacks(new DescribeStacksRequest().withStackName(config.api.stackName));
-			return !stacks.getStacks().isEmpty();
+			return stacks.getStacks().stream() //
+					.peek(s -> LOG.info("Found stack {}", s)) //
+					.filter(s -> s.getStackName().equals(config.api.stackName)) //
+					.filter(s -> !s.getStackStatus().equals("REVIEW_IN_PROGRESS")) //
+					.findAny() //
+					.isPresent();
 		} catch (final AmazonCloudFormationException e) {
 			if (e.getStatusCode() == 400) {
+				LOG.info("Got exception", e);
 				return false;
 			}
 			throw e;
