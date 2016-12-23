@@ -36,29 +36,37 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 
 		final SamConfig config = createConfigDsl(project);
 
-		final Zip zipTask = createBuildZipTask(project);
+		config.getProjct().afterEvaluate(new Action<Project>() {
 
-		final S3UploadTask uploadZipTask = createUploadZipTask(config, zipTask);
+			@Override
+			public void execute(Project arg0) {
+				final Zip zipTask = createBuildZipTask(project);
 
-		final ReplacePlaceholerTask updateSwaggerTask = createUpdateSwaggerTask(config);
-		final S3UploadTask uploadSwaggerTask = createUploadSwaggerTask(config, updateSwaggerTask);
+				final S3UploadTask uploadZipTask = createUploadZipTask(config, zipTask);
 
-		final DeployTask deployTask = createDeployTask(config, uploadZipTask, uploadSwaggerTask);
+				S3UploadTask uploadSwaggerTask = null;
+				if (config.api.swaggerDefinition != null) {
+					final ReplacePlaceholerTask updateSwaggerTask = createUpdateSwaggerTask(config);
+					uploadSwaggerTask = createUploadSwaggerTask(config, updateSwaggerTask);
+				}
+				createDeployTask(config, uploadZipTask, uploadSwaggerTask);
+			}
+		});
 	}
 
 	private DeployTask createDeployTask(SamConfig config, S3UploadTask uploadZipTask, S3UploadTask uploadSwaggerTask) {
 		final DeployTask task = (DeployTask) config.getProjct().task(singletonMap("type", DeployTask.class), "deploy");
 		task.setDescription("Deploy stack to AWS");
 		task.setGroup(TASK_GROUP);
-		task.dependsOn(uploadZipTask, uploadSwaggerTask);
+		if (uploadSwaggerTask != null) {
+			task.dependsOn(uploadZipTask, uploadSwaggerTask);
+			task.swaggerUri = uploadSwaggerTask.getS3Url();
+		} else {
+			task.dependsOn(uploadZipTask);
+		}
 		task.config = config;
-		config.getProjct().afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(Project project) {
-				task.codeUri = uploadZipTask.getS3Url();
-				task.swaggerUri = uploadSwaggerTask.getS3Url();
-			}
-		});
+		task.codeUri = uploadZipTask.getS3Url();
+
 		return task;
 	}
 
@@ -66,18 +74,12 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		final ReplacePlaceholerTask task = (ReplacePlaceholerTask) config.getProjct()
 				.task(singletonMap("type", ReplacePlaceholerTask.class), "updateSwagger");
 
-		config.getProjct().afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(Project project) {
-				final AwsMetadataService awsMetadataService = new AwsMetadataService(config);
-				task.parameters = asList(
-						new Parameter().withParameterKey("region").withParameterValue(config.getRegion().toString()),
-						new Parameter().withParameterKey("accountId")
-								.withParameterValue(awsMetadataService.getAccountId()));
-				task.input = config.api.swaggerDefinition;
-				task.output = new File(project.getBuildDir(), task.input.getName());
-			}
-		});
+		final AwsMetadataService awsMetadataService = new AwsMetadataService(config);
+		task.parameters = asList(
+				new Parameter().withParameterKey("region").withParameterValue(config.getRegion().toString()),
+				new Parameter().withParameterKey("accountId").withParameterValue(awsMetadataService.getAccountId()));
+		task.input = config.api.swaggerDefinition;
+		task.output = new File(config.getProjct().getBuildDir(), task.input.getName());
 		return task;
 	}
 
@@ -88,12 +90,7 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		task.setGroup(TASK_GROUP);
 		task.dependsOn(zipTask);
 		task.config = config;
-		config.getProjct().afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(Project project) {
-				task.file = zipTask.getOutputs().getFiles().getSingleFile();
-			}
-		});
+		task.file = zipTask.getOutputs().getFiles().getSingleFile();
 		return task;
 	}
 
@@ -104,12 +101,7 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		task.setGroup(TASK_GROUP);
 		task.dependsOn(updateTask);
 		task.config = config;
-		config.getProjct().afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(Project project) {
-				task.file = updateTask.output;
-			}
-		});
+		task.file = updateTask.output;
 		return task;
 	}
 
@@ -118,20 +110,14 @@ public class AwsSamDeployPlugin implements Plugin<Project> {
 		task.setDescription("Build lambda zip");
 		task.setGroup(TASK_GROUP);
 		task.setBaseName(project.getName());
-		project.afterEvaluate(new Action<Project>() {
-			@Override
-			public void execute(Project project) {
-				task.into("lib", closure(task, CopySpec.class, (delegate) -> {
-					delegate.from(project.getConfigurations().getByName("runtime"));
-				}));
-				task.into("", closure(task, CopySpec.class, (delegate) -> {
-					delegate.from(project.getTasks().getByPath(":compileJava"),
-							project.getTasks().getByPath(":processResources"));
-				}));
-			}
-		});
+		task.into("lib", closure(task, CopySpec.class, (delegate) -> {
+			delegate.from(project.getConfigurations().getByName("runtime"));
+		}));
+		task.into("", closure(task, CopySpec.class, (delegate) -> {
+			delegate.from(project.getTasks().getByPath(":compileJava"),
+					project.getTasks().getByPath(":processResources"));
+		}));
 		return task;
-
 	}
 
 	private SamConfig createConfigDsl(Project project) {

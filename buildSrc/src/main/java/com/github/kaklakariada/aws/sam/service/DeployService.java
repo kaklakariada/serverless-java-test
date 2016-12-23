@@ -41,10 +41,10 @@ public class DeployService {
 	private String updateTemplateBody(String templateBody, String codeUri, String swaggerDefinitionUri) {
 		final Collection<Parameter> parameters = asList(
 				new Parameter().withParameterKey("CodeUri").withParameterValue(Objects.requireNonNull(codeUri)),
-				new Parameter().withParameterKey("DefinitionUri")
-						.withParameterValue(Objects.requireNonNull(swaggerDefinitionUri)),
 				new Parameter().withParameterKey("stage").withParameterValue(config.currentStage));
-
+		if (swaggerDefinitionUri != null) {
+			parameters.add(new Parameter().withParameterKey("DefinitionUri").withParameterValue(swaggerDefinitionUri));
+		}
 		return templateService.replaceParameters(templateBody, parameters);
 	}
 }

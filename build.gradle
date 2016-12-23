@@ -28,7 +28,7 @@ sam {
     api {
         stackBaseName = project.name
         samTemplate = file('template.yaml')
-        swaggerDefinition = file('swagger.yaml')
+        //swaggerDefinition = file('swagger.yaml')
     }
 }
 
@@ -52,23 +52,6 @@ dependencies {
     //runtime 'org.slf4j:slf4j-log4j12:1.7.19'
     //runtime 'com.amazonaws:aws-lambda-java-log4j:1.0.0'
 }
-
-
-//task uploadSwaggerDefinition(type: S3UploadTask) {
-//  region = awsregion
-//  bucket = binarybucket
-//  prefix = uploadPrefix
-//  file = file('swagger.yaml')
-//}
-
-//task deploy(type: DeployTask, dependsOn: [uploadZip, uploadSwaggerDefinition]) {
-//  region = awsregion
-//  codeUri = tasks['uploadZip'].s3Url
-//  swaggerUri = tasks['uploadSwaggerDefinition'].s3Url
-//  template = file('template.yaml')
-//  stage = 'test'
-//}
-
 
 task vscodeClasspathFile {
     description 'Generates classpath file for the Visual Studio Code java plugin'

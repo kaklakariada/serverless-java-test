@@ -1,13 +1,13 @@
 ---
 swagger: 2.0
-basePath: /prod
+basePath: /${stage}
 info:
-  title: AwsSamExample
+  title: My AWS SAM test app
 schemes:
 - https
 paths:
   /hello:
-    x-amazon-apigateway-any-method:
+    get:
       produces:
       - application/json
       responses:
@@ -19,7 +19,7 @@ paths:
         responses:
           default:
             statusCode: 200
-        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:function:${stageVariables.LambdaFunctionName}/invocations
+        uri: arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:function:${stageVariables.HelloLambdaFunctionName}/invocations
         passthroughBehavior: when_no_match
         httpMethod: POST
         type: aws_proxy
