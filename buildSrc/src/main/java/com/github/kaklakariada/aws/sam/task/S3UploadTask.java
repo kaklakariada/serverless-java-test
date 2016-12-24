@@ -1,6 +1,8 @@
 package com.github.kaklakariada.aws.sam.task;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.Input;
@@ -45,12 +47,14 @@ public class S3UploadTask extends DefaultTask {
 	}
 
 	private void transferFileToS3(final AmazonS3 s3Client, final String key) {
-		getProject().getLogger().info("Uploading file {} as {} to bucket {}", file, key, config.getDeploymentBucket());
+		final long fileSizeMb = file.length() / (1024 * 1024);
+		getLogger().info("Uploading {} MB from file {} to {}", fileSizeMb, file, getS3Url());
 		final TransferManager transferManager = new TransferManager(s3Client);
+		final Instant start = Instant.now();
 		final Upload upload = transferManager.upload(config.getDeploymentBucket(), key, file);
 		try {
 			upload.waitForCompletion();
-			getProject().getLogger().info("Uploaded {} to {}", file, getS3Url());
+			getLogger().info("Uploaded {} to {} in {}", file, getS3Url(), Duration.between(start, Instant.now()));
 		} catch (final InterruptedException e) {
 			Thread.currentThread().interrupt();
 			throw new AssertionError("Upload interrupted", e);
