@@ -21,5 +21,4 @@ public class Handler extends LambdaRequestHandler<Request, Response> {
 		LOG.debug("Got body {}", body);
 		return new Response("Success: " + body.toString());
 	}
-
 }

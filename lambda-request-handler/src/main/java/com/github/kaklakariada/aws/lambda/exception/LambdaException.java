@@ -12,10 +12,6 @@ public class LambdaException extends RuntimeException {
 		this.errorMessage = errorMessage;
 	}
 
-	protected LambdaException(String message, int errorCode, String errorMessage) {
-		this(message, null, errorCode, errorMessage);
-	}
-
 	public String getErrorMessage() {
 		return errorMessage;
 	}

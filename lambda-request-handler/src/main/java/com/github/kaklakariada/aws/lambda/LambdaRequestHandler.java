@@ -8,6 +8,9 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,6 +20,8 @@ import com.github.kaklakariada.aws.lambda.exception.LambdaException;
 import com.github.kaklakariada.aws.lambda.request.ApiGatewayRequest;
 
 public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler {
+
+	private static final Logger LOG = LoggerFactory.getLogger(LambdaRequestHandler.class);
 
 	private final ObjectMapper objectMapper;
 	private final Class<I> requestType;
@@ -48,6 +53,7 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 		try {
 			objectMapper.writeValue(output, response);
 		} catch (final Exception e) {
+			LOG.error("Error serializing response: " + e.getMessage(), e);
 			throw new InternalServerErrorException("Error serializing response", e);
 		}
 	}
@@ -56,6 +62,7 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 		try {
 			return objectMapper.readValue(input, type);
 		} catch (final Exception e) {
+			LOG.error("Error parsing request: " + e.getMessage(), e);
 			throw new BadRequestException("Error parsing request", e);
 		}
 	}
@@ -65,7 +72,11 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 			final O result = handleRequest(request, body, context);
 			return convertRespone(result);
 		} catch (final LambdaException e) {
+			LOG.error("Error processing request: " + e.getMessage());
 			return new ApiGatewayResponse(e);
+		} catch (final Exception e) {
+			LOG.error("Error processing request: " + e.getMessage(), e);
+			return new ApiGatewayResponse(new InternalServerErrorException("Error", e));
 		}
 	}
 
@@ -77,6 +88,7 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 		try {
 			return objectMapper.writeValueAsString(result);
 		} catch (final Exception e) {
+			LOG.error("Error serializing response: " + e.getMessage(), e);
 			throw new InternalServerErrorException("Error serializing response", e);
 		}
 	}
