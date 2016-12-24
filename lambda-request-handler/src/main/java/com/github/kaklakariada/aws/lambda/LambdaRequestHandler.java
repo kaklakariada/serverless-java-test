@@ -26,20 +26,32 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 
 	private final ObjectMapper objectMapper;
 	private final Class<I> requestType;
-	private final Class<O> responseType;
 
-	protected LambdaRequestHandler(Class<I> requestType, Class<O> responseType) {
+	protected LambdaRequestHandler(Class<I> requestType) {
 		this.requestType = requestType;
-		this.responseType = responseType;
 		this.objectMapper = new ObjectMapper();
 	}
 
 	@Override
 	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-		final ApiGatewayRequest request = parseRequest(readStream(input), ApiGatewayRequest.class);
-		final I body = parseBody(request.getBody());
-		final ApiGatewayResponse response = handleRequestInternally(request, body, context);
+
+		final ApiGatewayResponse response = handleRequest(input, context);
 		sendResponse(output, response);
+	}
+
+	private ApiGatewayResponse handleRequest(InputStream input, Context context) {
+		try {
+			final ApiGatewayRequest request = parseRequest(readStream(input), ApiGatewayRequest.class);
+			final I body = parseBody(request.getBody());
+			final O result = handleRequest(request, body, context);
+			return new ApiGatewayResponse(serializeResult(result));
+		} catch (final LambdaException e) {
+			LOG.error("Error processing request: " + e.getMessage());
+			return buildErrorResponse(e, context);
+		} catch (final Exception e) {
+			LOG.error("Error processing request: " + e.getMessage(), e);
+			return buildErrorResponse(new InternalServerErrorException("Error", e), context);
+		}
 	}
 
 	private String readStream(InputStream input) {
@@ -75,21 +87,8 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 		}
 	}
 
-	private ApiGatewayResponse handleRequestInternally(ApiGatewayRequest request, final I body, Context context) {
-		try {
-			final O result = handleRequest(request, body, context);
-			return new ApiGatewayResponse(serializeResult(result));
-		} catch (final LambdaException e) {
-			LOG.error("Error processing request: " + e.getMessage());
-			return buildErrorResponse(e, request, context);
-		} catch (final Exception e) {
-			LOG.error("Error processing request: " + e.getMessage(), e);
-			return buildErrorResponse(new InternalServerErrorException("Error", e), request, context);
-		}
-	}
-
-	private ApiGatewayResponse buildErrorResponse(LambdaException e, ApiGatewayRequest request, Context context) {
-		final ErrorResponseBody errorResult = ErrorResponseBody.create(e, request, context);
+	private ApiGatewayResponse buildErrorResponse(LambdaException e, Context context) {
+		final ErrorResponseBody errorResult = ErrorResponseBody.create(e, context);
 		return new ApiGatewayResponse(e.getErrorCode(), emptyMap(), serializeResult(errorResult));
 	}
 
