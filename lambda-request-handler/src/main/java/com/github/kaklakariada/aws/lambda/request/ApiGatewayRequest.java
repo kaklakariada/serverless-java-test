@@ -9,6 +9,7 @@ public class ApiGatewayRequest {
 	private HttpMethod httpMethod;
 	private Map<String, String> headers;
 	private Map<String, String> queryStringParameters;
+	private Map<String, String> pathParameters;
 	private Map<String, String> stageVariables;
 	private RequestContext requestContext;
 	private String body;
@@ -32,6 +33,10 @@ public class ApiGatewayRequest {
 
 	public Map<String, String> getQueryStringParameters() {
 		return queryStringParameters;
+	}
+
+	public Map<String, String> getPathParameters() {
+		return pathParameters;
 	}
 
 	public Map<String, String> getStageVariables() {
