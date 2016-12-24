@@ -15,33 +15,17 @@ sam {
     defaultAwsProfile = 'default'
     defaultAwsRegion = awsregion
     defaultDeploymentBucket = awsDeploymentBucket
-    
     stages {
         test {
         }
-        
         prelive {
-        
         }
     }
-    
     api {
         stackBaseName = project.name
         samTemplate = file('template.yaml')
         swaggerDefinition = file('swagger.yaml')
     }
-}
-
-task printStage {
-    doLast {
-        sam.stages.each { println "stage $it" }
-        println "Current stage: $sam.stage"
-        println "Current config: $sam"
-    }
-}
-
-ext {
-    uploadPrefix = System.currentTimeMillis()
 }
 
 dependencies {
