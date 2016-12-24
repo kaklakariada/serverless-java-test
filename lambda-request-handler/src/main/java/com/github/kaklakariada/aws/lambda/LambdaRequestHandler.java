@@ -1,5 +1,7 @@
 package com.github.kaklakariada.aws.lambda;
 
+import static java.util.Collections.emptyMap;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,21 +78,22 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 	private ApiGatewayResponse handleRequestInternally(ApiGatewayRequest request, final I body, Context context) {
 		try {
 			final O result = handleRequest(request, body, context);
-			return convertRespone(result);
+			return new ApiGatewayResponse(serializeResult(result));
 		} catch (final LambdaException e) {
 			LOG.error("Error processing request: " + e.getMessage());
-			return new ApiGatewayResponse(e);
+			return buildErrorResponse(e, request, context);
 		} catch (final Exception e) {
 			LOG.error("Error processing request: " + e.getMessage(), e);
-			return new ApiGatewayResponse(new InternalServerErrorException("Error", e));
+			return buildErrorResponse(new InternalServerErrorException("Error", e), request, context);
 		}
 	}
 
-	private ApiGatewayResponse convertRespone(O result) {
-		return new ApiGatewayResponse(serializeResult(result));
+	private ApiGatewayResponse buildErrorResponse(LambdaException e, ApiGatewayRequest request, Context context) {
+		final ErrorResponseBody errorResult = ErrorResponseBody.create(e, request, context);
+		return new ApiGatewayResponse(e.getErrorCode(), emptyMap(), serializeResult(errorResult));
 	}
 
-	private String serializeResult(O result) {
+	private String serializeResult(Object result) {
 		try {
 			return objectMapper.writeValueAsString(result);
 		} catch (final Exception e) {

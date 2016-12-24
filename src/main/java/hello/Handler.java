@@ -19,6 +19,6 @@ public class Handler extends LambdaRequestHandler<Request, Response> {
 	public Response handleRequest(ApiGatewayRequest request, Request body, Context context) {
 		LOG.debug("Got request {}", request);
 		LOG.debug("Got body {}", body);
-		return new Response("Success: " + body.toString());
+		return new Response("Success: " + body);
 	}
 }

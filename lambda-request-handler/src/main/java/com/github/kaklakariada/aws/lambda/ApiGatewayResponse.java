@@ -3,8 +3,6 @@ package com.github.kaklakariada.aws.lambda;
 import java.util.Collections;
 import java.util.Map;
 
-import com.github.kaklakariada.aws.lambda.exception.LambdaException;
-
 public class ApiGatewayResponse {
 	private final int statusCode;
 	private final Map<String, String> headers;
@@ -18,10 +16,6 @@ public class ApiGatewayResponse {
 
 	public ApiGatewayResponse(String body) {
 		this(200, Collections.emptyMap(), body);
-	}
-
-	public ApiGatewayResponse(LambdaException e) {
-		this(e.getErrorCode(), Collections.emptyMap(), e.getErrorMessage());
 	}
 
 	public int getStatusCode() {
