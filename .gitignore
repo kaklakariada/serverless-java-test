@@ -18,3 +18,9 @@
 /buildSrc/.classpath
 /buildSrc/.project
 /buildSrc/.gradle
+
+/lambda-request-handler/.classpath
+/lambda-request-handler/.project
+/lambda-request-handler/.settings/org.eclipse.buildship.core.prefs
+/lambda-request-handler/bin/
+/lambda-request-handler/build/

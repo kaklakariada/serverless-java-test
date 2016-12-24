@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    jcenter()
+}
+
+version = '0.0.1'
+
+ext {
+    jacksonVersion = '2.8.5'
+}
+
+dependencies {
+    compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
+    compile 'org.slf4j:slf4j-api:1.7.22'
+    compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+}
