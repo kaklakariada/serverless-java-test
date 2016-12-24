@@ -23,7 +23,7 @@ Resources:
           Properties:
             RestApiId: !Ref ApiGatewayApi
             Path: /hello
-            Method: get
+            Method: ANY
             
 Outputs:
   ApiUrl:
