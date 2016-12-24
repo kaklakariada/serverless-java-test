@@ -1,12 +1,11 @@
 package com.github.kaklakariada.aws.lambda;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,18 +34,25 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 
 	@Override
 	public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException {
-		final ApiGatewayRequest request = parseRequest(new InputStreamReader(input, StandardCharsets.UTF_8),
-				ApiGatewayRequest.class);
+		final ApiGatewayRequest request = parseRequest(readStream(input), ApiGatewayRequest.class);
 		final I body = parseBody(request.getBody());
 		final ApiGatewayResponse response = handleRequestInternally(request, body, context);
 		sendResponse(output, response);
+	}
+
+	private String readStream(InputStream input) {
+		try (BufferedReader buffer = new BufferedReader(new InputStreamReader(input))) {
+			return buffer.lines().collect(Collectors.joining("\n"));
+		} catch (final IOException e) {
+			throw new InternalServerErrorException("Error reading input stream", e);
+		}
 	}
 
 	private I parseBody(String body) {
 		if (body == null || body.isEmpty()) {
 			return null;
 		}
-		return parseRequest(new StringReader(body), requestType);
+		return parseRequest(body, requestType);
 	}
 
 	private void sendResponse(OutputStream output, ApiGatewayResponse response) {
@@ -58,11 +64,11 @@ public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler
 		}
 	}
 
-	private <T> T parseRequest(Reader input, Class<T> type) {
+	private <T> T parseRequest(String input, Class<T> type) {
 		try {
 			return objectMapper.readValue(input, type);
 		} catch (final Exception e) {
-			LOG.error("Error parsing request: " + e.getMessage(), e);
+			LOG.error("Error parsing input '" + input + "': " + e.getMessage(), e);
 			throw new BadRequestException("Error parsing request", e);
 		}
 	}
