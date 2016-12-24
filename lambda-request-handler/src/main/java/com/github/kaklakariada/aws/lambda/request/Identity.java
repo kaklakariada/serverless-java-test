@@ -12,6 +12,7 @@ public class Identity {
 	private String userArn;
 	private String userAgent;
 	private String user;
+	private String accessKey;
 
 	public String getCognitoIdentityPoolId() {
 		return cognitoIdentityPoolId;
@@ -55,6 +56,10 @@ public class Identity {
 
 	public String getUser() {
 		return user;
+	}
+
+	public String getAccessKey() {
+		return accessKey;
 	}
 
 	@Override

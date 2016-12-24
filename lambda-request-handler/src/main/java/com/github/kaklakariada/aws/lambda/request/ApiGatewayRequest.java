@@ -51,7 +51,7 @@ public class ApiGatewayRequest {
 		return body;
 	}
 
-	public boolean isBase64Encoded() {
+	public boolean getIsBase64Encoded() {
 		return isBase64Encoded;
 	}
 
