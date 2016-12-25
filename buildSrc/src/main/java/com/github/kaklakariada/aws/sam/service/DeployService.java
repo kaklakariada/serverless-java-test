@@ -6,11 +6,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Objects;
 
+import org.gradle.api.logging.Logging;
+import org.slf4j.Logger;
+
 import com.amazonaws.services.cloudformation.model.ChangeSetType;
 import com.amazonaws.services.cloudformation.model.Parameter;
 import com.github.kaklakariada.aws.sam.config.SamConfig;
 
 public class DeployService {
+	private static final Logger LOG = Logging.getLogger(DeployService.class);
+
 	private final CloudformationService cloudFormationService;
 	private final TemplateService templateService;
 	private final SamConfig config;
@@ -36,6 +41,12 @@ public class DeployService {
 		cloudFormationService.waitForChangeSetReady(changeSetArn);
 		cloudFormationService.executeChangeSet(changeSetArn);
 		cloudFormationService.waitForStackReady();
+		logStackOutput();
+	}
+
+	private void logStackOutput() {
+		cloudFormationService.getOutputParameters()
+				.forEach(output -> LOG.info("Stack output {} = {}", output.getOutputKey(), output.getOutputValue()));
 	}
 
 	private String updateTemplateBody(String templateBody, String codeUri, String swaggerDefinitionUri) {

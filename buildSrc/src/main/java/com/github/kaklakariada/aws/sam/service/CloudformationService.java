@@ -3,6 +3,7 @@ package com.github.kaklakariada.aws.sam.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Supplier;
 
 import org.gradle.api.logging.Logging;
@@ -20,6 +21,7 @@ import com.amazonaws.services.cloudformation.model.DescribeChangeSetResult;
 import com.amazonaws.services.cloudformation.model.DescribeStacksRequest;
 import com.amazonaws.services.cloudformation.model.DescribeStacksResult;
 import com.amazonaws.services.cloudformation.model.ExecuteChangeSetRequest;
+import com.amazonaws.services.cloudformation.model.Output;
 import com.amazonaws.services.cloudformation.model.Parameter;
 import com.amazonaws.services.cloudformation.model.Stack;
 import com.github.kaklakariada.aws.sam.DeploymentException;
@@ -58,9 +60,7 @@ public class CloudformationService {
 
 	public boolean stackExists() {
 		try {
-			final DescribeStacksResult stacks = cloudFormation
-					.describeStacks(new DescribeStacksRequest().withStackName(config.getStackName()));
-			return stacks.getStacks().stream() //
+			return describeStack().stream() //
 					.peek(s -> LOG.info("Found stack {}", s)) //
 					.filter(s -> s.getStackName().equals(config.getStackName())) //
 					.filter(s -> !s.getStackStatus().equals("REVIEW_IN_PROGRESS")) //
@@ -73,6 +73,12 @@ public class CloudformationService {
 			}
 			throw e;
 		}
+	}
+
+	public List<Output> getOutputParameters() {
+		final Stack stack = describeStack().stream().findFirst()
+				.orElseThrow(() -> new DeploymentException("Stack not found"));
+		return stack.getOutputs();
 	}
 
 	public void waitForChangeSetReady(String changeSetArn) {
@@ -95,11 +101,15 @@ public class CloudformationService {
 	}
 
 	private Stack getStackStatus() {
-		final DescribeStacksResult result = cloudFormation
-				.describeStacks(new DescribeStacksRequest().withStackName(config.getStackName()));
-		return result.getStacks().stream() //
+		return describeStack().stream() //
 				.findFirst() //
 				.orElseThrow(() -> new DeploymentException("Stack '" + config.getStackName() + "' not found"));
+	}
+
+	private List<Stack> describeStack() {
+		final DescribeStacksResult result = cloudFormation
+				.describeStacks(new DescribeStacksRequest().withStackName(config.getStackName()));
+		return result.getStacks();
 	}
 
 	public void executeChangeSet(String changeSetArn) {
