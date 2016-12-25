@@ -1,16 +1,9 @@
 /.gradle/
 /build/
-/javaconfig.json
-/javac-services.*.log
-/javac-services.*.log.lck
-/node_modules/
-/npm-debug.log
-/classpath.txt
 /bin/
 /.classpath
 /.project
 /.settings/org.eclipse.buildship.core.prefs
-/.serverless
 /gradle.properties
 
 /lambda-request-handler/.classpath
