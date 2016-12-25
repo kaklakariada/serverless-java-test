@@ -3,16 +3,12 @@ package com.github.kaklakariada.aws.lambda;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.github.kaklakariada.aws.lambda.request.ApiGatewayRequest;
 
 public abstract class LambdaRequestHandler<I, O> implements RequestStreamHandler {
 
-	private static final Logger LOG = LoggerFactory.getLogger(LambdaRequestHandler.class);
 	private final RequestHandlingService<I, O> requestHandlingService;
 
 	protected LambdaRequestHandler(Class<I> requestType) {

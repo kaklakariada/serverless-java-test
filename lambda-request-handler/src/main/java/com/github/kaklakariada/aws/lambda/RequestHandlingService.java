@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Base64;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class RequestHandlingService<I, O> {
 	private ApiGatewayResponse handleRequest(InputStream input, Context context) {
 		try {
 			final ApiGatewayRequest request = parseRequest(readStream(input), ApiGatewayRequest.class);
-			final I body = parseBody(request.getBody());
+			final I body = parseBody(request);
 			final O result = handler.handleRequestInternal(request, body, context);
 			return new ApiGatewayResponse(serializeResult(result));
 		} catch (final LambdaException e) {
@@ -60,11 +61,25 @@ public class RequestHandlingService<I, O> {
 		}
 	}
 
-	private I parseBody(String body) {
+	private I parseBody(ApiGatewayRequest request) {
+		final String body = request.getBody();
 		if (body == null || body.isEmpty()) {
 			return null;
 		}
-		return parseRequest(body, requestType);
+		if (!request.getIsBase64Encoded()) {
+			return parseRequest(body, requestType);
+		}
+		if (!requestType.equals(byte[].class)) {
+			throw new IllegalStateException(
+					"Got base64 encoded body but expected request type is " + requestType.getName());
+		}
+		return base64Decode(body);
+	}
+
+	private I base64Decode(String body) {
+		@SuppressWarnings("unchecked")
+		final I decodedBody = (I) Base64.getDecoder().decode(body);
+		return decodedBody;
 	}
 
 	private void sendResponse(OutputStream output, ApiGatewayResponse response) {
