@@ -11,3 +11,7 @@
 /lambda-request-handler/.settings/org.eclipse.buildship.core.prefs
 /lambda-request-handler/bin/
 /lambda-request-handler/build/
+
+/buildSrc/bin/
+/buildSrc/build/
+/buildSrc/.gradle/

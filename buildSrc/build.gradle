@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+}
+
+test.enabled = false
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile project(':aws-sam-gradle')
+}
