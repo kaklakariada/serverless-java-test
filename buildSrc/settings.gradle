@@ -1,2 +1,0 @@
-include 'aws-sam-gradle'
-project(':aws-sam-gradle').projectDir = new File(settingsDir, '../../aws-sam-gradle')
