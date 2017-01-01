@@ -1,1 +1,2 @@
-include 'lambda-request-handler'
+rootProject.name = 'serverless-java-test'
+//includeBuild '../aws-lambda-request-handler'

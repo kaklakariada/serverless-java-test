@@ -1,11 +1,11 @@
 plugins {
     id 'java'
+    id 'com.github.kaklakariada.aws-sam-deploy' version '0.1.1'
 }
-
-apply plugin: com.github.kaklakariada.aws.sam.AwsSamDeployPlugin
 
 repositories {
     jcenter()
+    maven { url "http://dl.bintray.com/kaklakariada/maven" }
 }
 
 version = '0.0.1'
@@ -14,11 +14,11 @@ ext {
     awsSdkVersion = '1.11.73'
 }
 
-sam {
+serverless {
     currentStage = "test"
     defaultAwsProfile = 'default'
     defaultAwsRegion = awsregion
-    defaultDeploymentBucket = awsDeploymentBucket
+    defaultDeploymentBucket = binarybucket
     stages {
         test {
         }
@@ -26,18 +26,18 @@ sam {
         }
     }
     api {
-        stackBaseName = project.name
+        stackName = project.name
         samTemplate = file('template.yaml')
         swaggerDefinition = file('swagger.yaml')
     }
 }
 
 dependencies {
-    compile project(':lambda-request-handler')
+    compile 'com.github.kaklakariada:aws-lambda-request-handler:0.0.1'
     compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
     compile 'org.slf4j:slf4j-api:1.7.22'
     compile "com.amazonaws:aws-java-sdk-dynamodb:$awsSdkVersion"
-    
+
     runtime 'org.slf4j:slf4j-log4j12:1.7.19'
     runtime 'com.amazonaws:aws-lambda-java-log4j:1.0.0'
 }
