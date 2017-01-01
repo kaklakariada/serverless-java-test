@@ -5,13 +5,3 @@
 /.project
 /.settings/org.eclipse.buildship.core.prefs
 /gradle.properties
-
-/lambda-request-handler/.classpath
-/lambda-request-handler/.project
-/lambda-request-handler/.settings/org.eclipse.buildship.core.prefs
-/lambda-request-handler/bin/
-/lambda-request-handler/build/
-
-/buildSrc/bin/
-/buildSrc/build/
-/buildSrc/.gradle/
